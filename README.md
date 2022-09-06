@@ -27,9 +27,8 @@ begränsade datorkunskaper (tomtenissar). Dokumentationen (i form av en rapport 
 implementationen) av systemet är av högsta vikt eftersom en utvärdering av prototyperna ska ske
 nästan uteslutande från den skapade dokumentationen.
 
---- 
 
 ## ER Image
-Studenten ska välja 20% utav en ER modell och resultatet blev:
+Studenten ska välja 20% utav en ER modell och valde där med:
 
 ![](b21leowaER.png) 

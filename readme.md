@@ -32,4 +32,4 @@ nästan uteslutande från den skapade dokumentationen.
 ## ER Image
 Studenten ska välja 20% utav en ER modell och resultatet blev:
 
-![](b21leowaER.png)
+![](b21leowaER.png) 

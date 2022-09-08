@@ -35,5 +35,13 @@ CREATE TABLE inspelning(
     efternamn VARCHAR(10) NOT NULL,
     FOREIGN KEY(PNR, förnamn, efternamn) REFERENCES snälltBarn(PNR, förnamn, efternamn),
     PRIMARY KEY (tid, PNR, förnamn, efternamn)
-    
+)ENGINE=INNODB;
+
+/* Testa kod, kommer från MAC och kan inte köra mysql atm*/
+CREATE TABLE önskelista (
+    årtal DATE NOT NULL,
+    beksrivning VARCHAR(11),
+    medgiven BIT,
+    levererad BIT,
+    PRIMARY KEY(årtal)
 )ENGINE=INNODB;

@@ -71,9 +71,9 @@ o-snällhetsnivå över 95%.
 
 ## Antagande
 
-Barn är antingen snäll eller mindre snäll och därmed används Alternativ B på modellering. Alternativ B innebär att man skapar två tabeller och använder inte Barn som en tabell. Ex: Snäll(_PNR, _Namn, födelseår, Summa, trovärdighet, Hjälpsamhet) och mindreSnäll(_PNR, _Namn, födelseår, Summa, trovärdighet, Nivå, leveransNr). Nackdelen med att använda Alternativ B är hantering av partiella arv vilket inte används.
+Barn är antingen snäll eller mindre snäll och kommer därmed använda alternativ A där barn inte måste vara snällt eller mindresnällt. Kommer se ut följande barn(PNR, Namn, ...) snälltBarn(PNR, namn, ...) mindreSnälltBarn(PNR, namn, ...).
 
-
+har även gjort en horizontell denormalization där man skapar en ny tabell för önskelist för önskelist beskrivning och även för inspelning med inspelningsBeksrivning
 
 
 ## Frågor att ställa

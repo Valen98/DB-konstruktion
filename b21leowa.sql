@@ -96,10 +96,6 @@ CREATE USER 'barn'@'localhost' IDENTIFIED BY 'barn';
 
 CREATE USER 'admin'@'localhost' IDENTIFIED BY 'admin';
 
-GRANT DELETE, UPDATE ON önskelista TO 'barn'@'localhost';
-
-SHOW GRANTS FOR 'barn'@'localhost';
-
 SELECT * FROM önskelista, barn WHERE önskelista.PNR = barn.PNR;
 
 #A view where the child for his/hers own wishlist
@@ -110,3 +106,7 @@ SELECT * FROM barnetsÖnskelista;
 CREATE VIEW barnetsInspelning AS SELECT inspelning.tid, inspelning.beskrivning, inspelning.PNR, inspelning.namn FROM inspelning LEFT JOIN barn ON inspelning.PNR = barn.PNR;
 
 SELECT * FROM barnetsInspelning;
+
+/*GIVES THE CHILDREN ACCESS TO SELECT, DELETE and UPDATE to barnetsÖnskelista and barnetsInspelning */
+GRANT SELECT, DELETE, UPDATE ON barnetsÖnskelista TO 'barn'@'localhost';
+GRANT SELECT, DELETE, UPDATE ON barnetsInspelning TO 'barn'@'localhost';

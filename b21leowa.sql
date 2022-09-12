@@ -1,19 +1,21 @@
-drop database B21leowa;
-create database b21leowa;
-
-use b21leowa;
+DROP DATABASE B21leowa;
+CREATE DATABASE b21leowa;
+DROP USER 'barn'@'localhost';
+DROP USER 'admin'@'localhost';
+FLUSH PRIVILEGES;
+USE b21leowa;
 
 # DEFAULT TABLE FOR BARN 
 CREATE TABLE barn(
-	PNR CHAR(14) NOT NULL,
+	PNR VARCHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
-    födelseår CHAR(4) NOT NULL,
+    födelseår DATE NOT NULL,
     PRIMARY KEY (PNR, namn)
 )ENGINE=INNODB;
-
+CREATE INDEX barnPNR ON barn(PNR);
 #TABLE FOR BARN INHERITANCE
 CREATE TABLE snälltBarn(
-	PNR CHAR(14) NOT NULL,
+	PNR VARCHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
 	hjälpsamhet INTEGER,
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
@@ -22,7 +24,7 @@ CREATE TABLE snälltBarn(
 
 # TABLE FOR BARN INHERITANCE
 CREATE TABLE mindreSnälltBarn(
-	PNR CHAR(14) NOT NULL,
+	PNR VARCHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     nivå INTEGER,
     leveransNummer CHAR(10),
@@ -30,13 +32,22 @@ CREATE TABLE mindreSnälltBarn(
     PRIMARY KEY(PNR, namn)
 )ENGINE=INNODB;
 
+#Horizontell split from child and childText
+CREATE TABLE barnBeskrivning (
+	PNR VARCHAR(14) NOT NULL,
+    namn VARCHAR(255) NOT NULL,
+    beskrivning text,
+	FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
+	PRIMARY KEY(PNR, namn)
+)ENGINE=INNODB;
+
 CREATE TABLE inspelning(
 	tid DATETIME NOT NULL,
-    beksrivning VARCHAR(11),
-    kvalitet CHAR(3),
+    beskrivning VARCHAR(11),
+    kvalitet TINYINT,
     filnamn VARCHAR(10),
     inspelningsText TEXT,
-    PNR CHAR(14) NOT NULL,
+    PNR VARCHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     FOREIGN KEY(PNR, namn) REFERENCES barn(PNR, namn),
     PRIMARY KEY (tid, PNR, namn)
@@ -46,7 +57,7 @@ CREATE TABLE inspelning(
 CREATE TABLE inspelningsText(
 	tid DATETIME NOT NULL,
     inspelningsText TEXT,
-    PNR CHAR(14) NOT NULL,
+    PNR VARCHAR(14) NOT NULL,
 	namn VARCHAR(255) NOT NULL,
     FOREIGN KEY(tid, PNR, namn) REFERENCES inspelning(tid, PNR, namn),
 	PRIMARY KEY (tid, PNR, namn)
@@ -61,10 +72,11 @@ CREATE TABLE önskelista(
     medgiven TINYINT,
     beskrivning VARCHAR(255),
     levererad TINYINT,
-    PNR CHAR(14) NOT NULL,
+    PNR VARCHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
 	PRIMARY KEY(årtal, PNR, namn)
+    
 )ENGINE=INNODB;
 
 CREATE TABLE önseklistaBeskrivning (
@@ -75,3 +87,26 @@ CREATE TABLE önseklistaBeskrivning (
     FOREIGN KEY (årtal, PNR, namn) REFERENCES önskelista(årtal, PNR, namn),
     PRIMARY KEY(årtal, PNR, namn)
 )ENGINE=INNODB;
+
+INSERT INTO barn(PNR, namn, födelseår) VALUES ("20090909-0909", "Anders Andersson", "2009-09-09");
+INSERT INTO önskelista(årtal, medgiven, beskrivning, levererad, PNR, namn) VALUES ("2022-09-12", 0, "Vattenpistol", 0, "20090909-0909", "Anders Andersson");
+INSERT INTO inspelning(tid, beskrivning, kvalitet, filnamn, PNR, namn) VALUES("2022-09-12 10:25:00", "AndersFilm", 78, "Anders", "20090909-0909","Anders Andersson");
+
+CREATE USER 'barn'@'localhost' IDENTIFIED BY 'barn';
+
+CREATE USER 'admin'@'localhost' IDENTIFIED BY 'admin';
+
+GRANT DELETE, UPDATE ON önskelista TO 'barn'@'localhost';
+
+SHOW GRANTS FOR 'barn'@'localhost';
+
+SELECT * FROM önskelista, barn WHERE önskelista.PNR = barn.PNR;
+
+#A view where the child for his/hers own wishlist
+CREATE VIEW barnetsÖnskelista AS SELECT önskelista.årtal, önskelista.beskrivning, önskelista.levererad, önskelista.PNR, önskelista.namn FROM önskelista LEFT JOIN barn ON önskelista.PNR = barn.PNR;
+
+SELECT * FROM barnetsÖnskelista; 
+
+CREATE VIEW barnetsInspelning AS SELECT inspelning.tid, inspelning.beskrivning, inspelning.PNR, inspelning.namn FROM inspelning LEFT JOIN barn ON inspelning.PNR = barn.PNR;
+
+SELECT * FROM barnetsInspelning;

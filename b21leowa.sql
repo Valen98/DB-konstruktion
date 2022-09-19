@@ -7,19 +7,19 @@ USE b21leowa;
 
 -- DEFAULT TABLE FOR BARN 
 CREATE TABLE barn(
-	PNR VARCHAR(14) NOT NULL,
+	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     födelseår DATE NOT NULL,
-    snällhetsSkala INTEGER,
+    snällhetsSkala SMALLINT,
     PRIMARY KEY (PNR, namn)
 )ENGINE=INNODB;
 
 CREATE INDEX barnFödelseår ON barn(födelseår);
 
  CREATE TABLE barnRelation(
-    PNR1 VARCHAR(14) NOT NULL,
+    PNR1 CHAR(14) NOT NULL,
     namn1 VARCHAR(255) NOT NULL,
-    PNR2 VARCHAR(14) NOT NULL,
+    PNR2 CHAR(14) NOT NULL,
     namn2 VARCHAR(255) NOT NULL,
     typAvRelation VARCHAR(255) NOT NULL,
 	FOREIGN KEY (PNR1, namn1) REFERENCES barn(PNR, namn),
@@ -33,12 +33,11 @@ CREATE TABLE barnKod (
     PRIMARY KEY(ID)
 )ENGINE=INNODB;
 
-
 CREATE TABLE barnLog (
 	ID INTEGER NOT NULL AUTO_INCREMENT,
     OPERATION CHAR(3),
 	username VARCHAR(32),
-    PNR VARCHAR(14),
+    PNR CHAR(14),
     namn VARCHAR(255),
     tid DATETIME,
     tabell VARCHAR(255),
@@ -51,10 +50,10 @@ INSERT INTO barn(PNR, namn, födelseår) VALUES ("20090909-0909", "Anders Anders
 # Sysslor är antal sysslor som barnet har tilldelats och hur av dom sysslor hen har utfört. Därefter beräknas hjälpsamhet genom sysslor/utfördaSysslor
 -- TABLE FOR BARN INHERITANCE
 CREATE TABLE snälltBarn(
-	PNR VARCHAR(14) NOT NULL,
+	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
-    sysslor INTEGER,
-	utfördaSysslor INTEGER,
+    sysslor SMALLINT,
+	utfördaSysslor SMALLINT,
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
     PRIMARY KEY(PNR, namn)
 )ENGINE=INNODB;
@@ -63,9 +62,9 @@ INSERT INTO snälltBarn(PNR, namn, sysslor, utfördaSysslor) VALUES ("20090909-0
 
 -- TABLE FOR BARN INHERITANCE
 CREATE TABLE mindreSnälltBarn(
-	PNR VARCHAR(14) NOT NULL,
+	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
-    nivå INTEGER,
+    nivå SMALLINT,
     leveransNummer CHAR(10),
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
     PRIMARY KEY(PNR, namn)
@@ -75,7 +74,7 @@ CREATE TABLE mindreSnälltBarn(
 -- Horizontell split from child and childText
 CREATE TABLE barnBeskrivning (
     beskrivning TEXT,
-	PNR VARCHAR(14) NOT NULL,
+	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
 	FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
 	PRIMARY KEY(PNR, namn)
@@ -84,7 +83,7 @@ CREATE TABLE barnBeskrivning (
 CREATE TABLE barnBeskrivningLOG(
 	ID INTEGER NOT NULL AUTO_INCREMENT,
     OPERATION CHAR(3),
-    PNR VARCHAR(14) NOT NULL,
+    PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     tid DATETIME,
     PRIMARY KEY(ID)
@@ -95,7 +94,7 @@ CREATE TABLE inspelning(
     beskrivning VARCHAR(11),
     kvalitet TINYINT,
     filnamn VARCHAR(10),
-    PNR VARCHAR(14) NOT NULL,
+    PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     FOREIGN KEY(PNR, namn) REFERENCES barn(PNR, namn),
     PRIMARY KEY (tid, PNR, namn)
@@ -105,7 +104,7 @@ CREATE TABLE inspelning(
 CREATE TABLE inspelningsText(
 	tid DATETIME NOT NULL,
     inspelningsText TEXT,
-    PNR VARCHAR(14) NOT NULL,
+    PNR CHAR(14) NOT NULL,
 	namn VARCHAR(255) NOT NULL,
     FOREIGN KEY(tid, PNR, namn) REFERENCES inspelning(tid, PNR, namn),
 	PRIMARY KEY (tid, PNR, namn)
@@ -120,7 +119,7 @@ CREATE TABLE önskelista(
     medgiven TINYINT,
     beskrivning VARCHAR(255),
     levererad TINYINT,
-    PNR VARCHAR(14) NOT NULL,
+    PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
 	PRIMARY KEY(årtal, PNR, namn)
@@ -135,14 +134,6 @@ CREATE TABLE önseklistaBeskrivning (
     FOREIGN KEY (årtal, PNR, namn) REFERENCES önskelista(årtal, PNR, namn),
     PRIMARY KEY(årtal, PNR, namn)
 )ENGINE=INNODB;
-
-
-CREATE TABLE önskelistaViewVärde (
-     årtal DATE NOT NULL,
-     PNR CHAR(14) NOT NULL,
-     pris FLOAT
-)ENGINE=INNODB;
-
 
 -- Inserts
 INSERT INTO önskelista(årtal, medgiven, beskrivning, levererad, PNR, namn) VALUES ("2022-09-12", 0, "Vattenpistol", 0, "20090909-0909", "Anders Andersson");
@@ -220,22 +211,26 @@ BEGIN
 		END IF;
 	END IF;
 END;
-    
+
+#Log på insert
 CREATE TRIGGER tillSnälltBarnTrigger AFTER INSERT ON snälltBarn
  FOR EACH ROW BEGIN
 	INSERT INTO barnLog(OPERATION, username, PNR, namn, tid, tabell) VALUES ("INS", USER(), new.PNR, new.namn, NOW(), "snälltBarn");
 END;
 
+#Log på insert
 CREATE TRIGGER tillMindreSnälltBarnTrigger AFTER INSERT ON mindreSnälltBarn
  FOR EACH ROW BEGIN
  INSERT INTO barnLog(OPERATION, username, PNR, namn, tid, tabell) VALUES ("INS", USER(), new.PNR, new.namn, NOW(), "mindreSnälltBarn");
  END;
  
+ #Log på insert
  CREATE TRIGGER barnBeskrvningTriggerINS AFTER INSERT ON barnBeskrivning
  FOR EACH ROW BEGIN 
 	  INSERT INTO barnBeskrivningLOG(OPERATION, PNR, namn, tid) VALUES ("INS", new.PNR, new.Namn, NOW()); 
 END;
 
+#Log på update
 CREATE TRIGGER barnBeskrivningTriggerUDP AFTER UPDATE ON barnBeskrivning
 FOR EACH ROW BEGIN
 	INSERT INTO barnBeskrivningLOG(OPERATION, PNR, namn, tid) VALUES ("UPD", new.PNR, new.Namn, NOW()); 

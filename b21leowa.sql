@@ -171,10 +171,10 @@ CREATE VIEW hjälpsamhet AS SELECT utfördaSysslor/sysslor*100 AS hjälpsamhet, 
 SELECT * FROM hjälpsamhet;
 
 /*GIVES THE CHILDREN ACCESS TO SELECT, DELETE and UPDATE to barnetsÖnskelista and barnetsInspelning */
-GRANT SELECT, DELETE, UPDATE ON barnetsÖnskelista TO 'barn'@'localhost';
-GRANT SELECT, DELETE, UPDATE ON barnetsInspelning TO 'barn'@'localhost';
-GRANT SELECT ON önskelista TO 'barn'@'localhost';
-GRANT SELECT ON inspelning  TO 'barn'@'localhost';
+GRANT SELECT ON barnetsÖnskelista TO 'barn'@'localhost';
+GRANT SELECT ON barnetsInspelning TO 'barn'@'localhost';
+GRANT INSERT, UPDATE, DELETE  ON önskelista TO 'barn'@'localhost';
+GRANT INSERT, UPDATE, DELETE ON inspelning  TO 'barn'@'localhost';
 
 -- PUT ALL PROCEDURE AND TRIGGERS INSIDE THE DELIMITER
 DELIMITER //

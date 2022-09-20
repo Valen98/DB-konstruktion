@@ -27,11 +27,23 @@ CREATE INDEX barnFödelseår ON barn(födelseår);
     PRIMARY KEY (PNR1, namn1, PNR2, namn2)
 )ENGINE=INNODB;
 
-CREATE TABLE barnKod (
+CREATE TABLE snällhetsKod (
 	ID INTEGER NOT NULL,
     snällhet VARCHAR(255),
     PRIMARY KEY(ID)
 )ENGINE=INNODB;
+
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (0, "Inte snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (10, "Inte särkilt snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (20, "Hyffsat snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (30, "Ganska snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (40, "Lagom snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (50, "Snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (60, "Rätt så snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (70, "Ganska mycket snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (80, "Bra mycket snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (90, "Riktigt snäll");
+INSERT INTO snällhetsKod(ID, snällhet) VALUES (100, "Super snäll");
 
 CREATE TABLE barnLog (
 	ID INTEGER NOT NULL AUTO_INCREMENT,
@@ -53,12 +65,30 @@ CREATE TABLE snälltBarn(
 	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     sysslor SMALLINT,
-	utfördaSysslor SMALLINT,
+    utfördaSysslor SMALLINT,
+    sysslorNivå TINYINT,
     FOREIGN KEY (PNR, namn) REFERENCES barn(PNR, namn),
     PRIMARY KEY(PNR, namn)
 )ENGINE=INNODB;
 
-INSERT INTO snälltBarn(PNR, namn, sysslor, utfördaSysslor) VALUES ("20090909-0909", "Anders Andersson", 12, 10);
+CREATE TABLE sysslorKod(
+	ID TINYINT,
+    nivå VARCHAR(255),
+    PRIMARY KEY(ID)
+)ENGINE=INNODB;
+
+INSERT INTO sysslorKod(ID, nivå) VALUES (1, "Fruktansvärt uselt");
+INSERT INTO sysslorKod(ID, nivå) VALUES (2, "Riktigt dåligt");
+INSERT INTO sysslorKod(ID, nivå) VALUES (3, "Hyffsat dåligt");
+INSERT INTO sysslorKod(ID, nivå) VALUES (4, "Uselt");
+INSERT INTO sysslorKod(ID, nivå) VALUES (5, "Helt okej");
+INSERT INTO sysslorKod(ID, nivå) VALUES (6, "Lite bättre än okej");
+INSERT INTO sysslorKod(ID, nivå) VALUES (7, "Hyffsat bra");
+INSERT INTO sysslorKod(ID, nivå) VALUES (8, "Rätt bra");
+INSERT INTO sysslorKod(ID, nivå) VALUES (9, "Riktigt bra");
+INSERT INTO sysslorKod(ID, nivå) VALUES (10, "Sjukt bra");
+
+INSERT INTO snälltBarn(PNR, namn, sysslor, utfördaSysslor, sysslorNivå) VALUES ("20090909-0909", "Anders Andersson", 12, 8,10);
 
 -- TABLE FOR BARN INHERITANCE
 CREATE TABLE mindreSnälltBarn(
@@ -110,14 +140,11 @@ CREATE TABLE inspelningsText(
 	PRIMARY KEY (tid, PNR, namn)
 )ENGINE=INNODB;
 
-/*CREATE TABLE OF önskelista
-	Barn kan ha flera önskelistor
-	
-*/
+#CREATE TABLE OF önskelista Barn kan ha flera önskelistor
+
 CREATE TABLE önskelista(
 	årtal DATE NOT NULL,
     medgiven TINYINT,
-    beskrivning VARCHAR(255),
     levererad TINYINT,
     PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
@@ -126,26 +153,29 @@ CREATE TABLE önskelista(
     
 )ENGINE=INNODB;
 
-CREATE TABLE önseklistaBeskrivning (
+CREATE TABLE önskelistaBeskrivning (
 	årtal DATE NOT NULL,
 	PNR CHAR(14) NOT NULL,
     namn VARCHAR(255) NOT NULL,
     beskrivning TEXT,
+    kostnad SMALLINT,
     FOREIGN KEY (årtal, PNR, namn) REFERENCES önskelista(årtal, PNR, namn),
     PRIMARY KEY(årtal, PNR, namn)
 )ENGINE=INNODB;
 
--- Inserts
-INSERT INTO önskelista(årtal, medgiven, beskrivning, levererad, PNR, namn) VALUES ("2022-09-12", 0, "Vattenpistol", 0, "20090909-0909", "Anders Andersson");
+-- Inserts av önskelistor och inspelning
+INSERT INTO önskelista(årtal, medgiven, levererad, PNR, namn) VALUES ("2022-09-12", 0, 0, "20090909-0909", "Anders Andersson");
+INSERT INTO önskelistaBeskrivning(årtal, PNR, namn, beskrivning, kostnad) VALUES ("2022-09-12", "20090909-0909", "Anders Andersson", "Vattenpistol", 300);
+
+#Förra årets önskelista
+INSERT INTO önskelista(årtal, medgiven, levererad, PNR, namn) VALUES ("2021-09-12", 0, 0, "20090909-0909", "Anders Andersson");
 INSERT INTO inspelning(tid, beskrivning, kvalitet, filnamn, PNR, namn) VALUES("2022-09-12 10:25:00", "AndersFilm", 78, "Anders", "20090909-0909","Anders Andersson");
 INSERT INTO barnBeskrivning(PNR, namn, beskrivning) VALUES("20090909-0909", "Anders Andersson" ,"Detta är en beskrivning");
 
 SELECT * FROM barnBeskrivning;
 
 -- Users
-
 CREATE USER IF NOT EXISTS 'barn'@'localhost' IDENTIFIED BY 'barn';
-
 CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED BY 'admin';
 CREATE USER IF NOT EXISTS 'tomten'@'localhost' IDENTIFIED BY 'tomten';
 
@@ -153,31 +183,25 @@ GRANT SELECT, DELETE, UPDATE ON * TO 'tomten'@'localhost';
 
 SHOW GRANTS FOR 'admin'@'localhost';
 
-SELECT * FROM önskelista, barn WHERE önskelista.PNR = barn.PNR;
+# Skapar en vy för att räkna ut hur mycket hjälpsamhet ett snälltbarn har. 0 är inga gjorda sysslor och 100 är alla sysslor gjorda och utifrån kvalitet på deras inspelningar.
+CREATE VIEW trovärdighet AS SELECT ((utfördaSysslor/sysslor)*sysslorNivå)*10*inspelning.kvalitet/100 AS trovärdighet, snälltBarn.PNR, snälltBarn.namn FROM snälltBarn, inspelning WHERE snälltBarn.PNR = inspelning.PNR;
 
- -- Views 
-#A view where the child for his/hers own wishlist
-CREATE VIEW barnetsÖnskelista AS SELECT önskelista.årtal, önskelista.beskrivning, önskelista.levererad, önskelista.PNR, önskelista.namn FROM önskelista LEFT JOIN barn ON önskelista.PNR = barn.PNR;
+SELECT * FROM trovärdighet;
 
-SELECT * FROM barnetsÖnskelista; 
+#CREATE VIEW hjälpsamhet AS SELECT () AS hjälpsamhet, snälltBarn.PNR, snälltBarn.namn FROM snälltBarn
 
-CREATE VIEW barnetsInspelning AS SELECT inspelning.tid, inspelning.beskrivning, inspelning.PNR, inspelning.namn FROM inspelning LEFT JOIN barn ON inspelning.PNR = barn.PNR;
+# Skapar en vy som innehåller årets önskelistor.
+CREATE VIEW åretsÖnskelistor AS SELECT * FROM önskelista WHERE YEAR(årtal) = YEAR(NOW());
 
-SELECT * FROM barnetsInspelning;
-
-# Skapar en vy för att räkna ut hur mycket hjälpsamhet ett snälltbarn har. 0 är inga gjorda sysslor och 100 är alla sysslor gjorda.
-CREATE VIEW hjälpsamhet AS SELECT utfördaSysslor/sysslor*100 AS hjälpsamhet, PNR, namn FROM snälltBarn;
-
-SELECT * FROM hjälpsamhet;
+SELECT * FROM åretsÖnskelistor;
 
 /*GIVES THE CHILDREN ACCESS TO SELECT, DELETE and UPDATE to barnetsÖnskelista and barnetsInspelning */
-GRANT SELECT ON barnetsÖnskelista TO 'barn'@'localhost';
-GRANT SELECT ON barnetsInspelning TO 'barn'@'localhost';
 GRANT INSERT, UPDATE, DELETE  ON önskelista TO 'barn'@'localhost';
 GRANT INSERT, UPDATE, DELETE ON inspelning  TO 'barn'@'localhost';
 
 -- PUT ALL PROCEDURE AND TRIGGERS INSIDE THE DELIMITER
 DELIMITER //
+
 CREATE PROCEDURE uppdateraBarnBeskrivning(iPNR VARCHAR(14), iNamn VARCHAR(255), iBeskrivning TEXT)
 BEGIN 
     IF (SELECT PNR FROM barnBeskrivning WHERE PNR = iPNR AND namn = iNamn) THEN
@@ -186,6 +210,14 @@ BEGIN
         INSERT INTO barnBeskrivning(PNR, namn, beskrivning) VALUES (iPNR, iNamn, iBeskrivning);
 END IF;
 END; 
+
+CREATE PROCEDURE skapaÖnskelista(iDatum DATE, iPNR VARCHAR(14), iNamn VARCHAR(255), iBeskrivning TEXT, iFödelseÅr DATE) 
+BEGIN 
+	IF(SELECT PNR FROM önskelista WHERE PNR != iPNR AND namn != iNamn AND YEAR(årtal) != YEAR(iDatum) AND (YEAR(CURDATE()) - YEAR(iFödelseÅr) < 18)) THEN
+		INSERT INTO önskelista(årtal, medgiven, levererad, PNR, namn) VALUES (iDatum, 0, 0, iPNR, iNamn);
+        INSERT INTO önskelistaBeskrivning(årtal, PNR, namn, beskrivning) VALUES (iDatum, iPNR, iNamn, iBeskrivning);
+END IF;
+END;
 
 #PROCEDURE Som flyttar ifall ett barn går från snäll till mindre snällt.
 CREATE PROCEDURE tillMindreSnälltBarn(iPNR VARCHAR(14), iNamn VARCHAR(255), iNivå INTEGER, iLeveransNummer CHAR(10)) 
@@ -236,6 +268,7 @@ END;
 CREATE TRIGGER barnBeskrivningTriggerUDP AFTER UPDATE ON barnBeskrivning
 FOR EACH ROW BEGIN
 	INSERT INTO barnBeskrivningLOG(OPERATION, PNR, namn, tid) VALUES ("UPD", new.PNR, new.Namn, NOW()); 
+    
 END//
 DELIMITER ;
 
@@ -265,4 +298,8 @@ SELECT * FROM barnLog;
 CALL tillSnälltBarn("20090909-0909","Anders Andersson");
 
 SELECT * FROM barnLog;
-SELECT * FROM barnetsInspelning;
+
+SELECT * FROM snällhetsKod;
+
+CALL skapaÖnskelista(NOW(),"20070707-0707", "Simon Eldstrand", "Fotboll vill jag ha", "2007-07-07");
+SELECT * FROM önskelista;

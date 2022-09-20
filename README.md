@@ -30,7 +30,7 @@ nästan uteslutande från den skapade dokumentationen.
 
 ## ER Image
 
-Studenten ska välja 20% utav en ER modell och valde där med:
+Studenten ska välja 20% utav en ER modell och valde därmed:
 
 ![](b21leowaER.png) 
 
@@ -77,7 +77,3 @@ har även gjort en horizontell denormalization där man skapar en ny tabell för
 
 
 ## Frågor att ställa
-
-Ifall man har två stycken tabeller för snällt barn och mindre snällt barn, hur ska man spara främmande nyckel från barn i inspelning? Ska man spara följande FOREIGN KEY(PNR) REFERENCE snälltbarn och FOREIGN KEY(PNR) REFERENCE mindreSnälltbarn
-
-Hur ska man hantera derived attributes? T.ex. summa 
